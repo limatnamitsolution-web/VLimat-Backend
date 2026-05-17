@@ -1,0 +1,11 @@
+@VLimat.Eduz.App_HostAddress = http://localhost:5229
+
+GET {{VLimat.Eduz.App_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{VLimat.Eduz.App_HostAddress}}/todos/1
+Accept: application/json
+
+###

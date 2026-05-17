@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <PublishAot>false</PublishAot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.9.0" />
+    <!-- MediatR DI for the Web project so Program.cs can call AddMediatR -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VLimat.Eduz.Application\VLimat.Eduz.Application.csproj" />
+    <ProjectReference Include="..\VLimat.Eduz.Infrastructure\VLimat.Eduz.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
