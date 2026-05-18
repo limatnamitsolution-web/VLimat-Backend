@@ -17,13 +17,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Stop Existing Container
-        run: docker stop vlimat-backend || exit 0
+        run: docker stop vlimat-backend
+        continue-on-error: true
 
       - name: Remove Existing Container
-        run: docker rm vlimat-backend || exit 0
+        run: docker rm vlimat-backend
+        continue-on-error: true
 
       - name: Remove Existing Image
-        run: docker rmi vlimat-backend || exit 0
+        run: docker rmi vlimat-backend
+        continue-on-error: true
 
       - name: Build Docker Image
         run: docker build -t vlimat-backend .

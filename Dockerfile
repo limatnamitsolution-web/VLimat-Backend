@@ -4,8 +4,11 @@ WORKDIR /src
 
 COPY . .
 
-RUN dotnet restore
-RUN dotnet publish -c Release -o /app/publish
+WORKDIR /src/VLimat.Eduz.App/VLimat.Eduz.App
+
+RUN dotnet restore VLimat.Eduz.App.csproj
+
+RUN dotnet publish VLimat.Eduz.App.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 
