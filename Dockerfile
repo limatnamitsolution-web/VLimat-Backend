@@ -4,6 +4,8 @@ WORKDIR /src
 
 COPY . .
 
+WORKDIR /src/src/VLimat.Eduz.App
+
 RUN dotnet restore
 RUN dotnet publish -c Release -o /app/publish
 
