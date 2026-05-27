@@ -13,12 +13,68 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
         with:
-          args: >
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install SonarScanner for .NET
+        shell: powershell
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: SonarQube Begin
+        shell: powershell
+        run: |
+          dotnet sonarscanner begin `
+            /k:"${{ vars.SONAR_PROJECT_KEY }}" `
+            /d:sonar.host.url="${{ vars.SONAR_HOST_URL }}" `
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+      - name: Restore
+        shell: powershell
+        run: dotnet restore .\YourSolution.sln
+
+      - name: Build
+        shell: powershell
+        run: dotnet build .\YourSolution.sln --configuration Release --no-restore
+
+      - name: Test
+        shell: powershell
+        run: dotnet test .\YourSolution.sln --configuration Release --no-build
+
+      - name: SonarQube End
+        shell: powershell
+        run: |
+          dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+      - name: Stop existing container
+        shell: powershell
+        run: docker stop vlimat-backend
+        continue-on-error: true
+
+      - name: Remove existing container
+        shell: powershell
+        run: docker rm vlimat-backend
+        continue-on-error: true
+
+      - name: Remove existing image
+        shell: powershell
+        run: docker rmi vlimat-backend
+        continue-on-error: true
+
+      - name: Build Docker image
+        shell: powershell
+        run: docker build -t vlimat-backend .
+
+      - name: Run Docker container
+        shell: powershell
+        run: docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
