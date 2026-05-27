@@ -1,22 +1,24 @@
-steps:
-  - name: Checkout source
-    uses: actions/checkout@v4
-    with:
-      fetch-depth: 0
+name: Deploy Backend
 
-  - name: Setup .NET
-    uses: actions/setup-dotnet@v4
-    with:
-      dotnet-version: '9.0.x'
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-  - name: SonarQube Scan
-    uses: SonarSource/sonarqube-scan-action@v4
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
-    with:
-      args: >
-        -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+jobs:
+  deploy:
+    runs-on: [self-hosted, windows, x64, backend]
 
-  - name: Build Docker image
-    run: docker build -t vlimat-backend .
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
