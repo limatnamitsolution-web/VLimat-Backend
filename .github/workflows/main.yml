@@ -16,16 +16,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://localhost:9000
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          args: >
-            -Dsonar.projectKey=vlimat-backend
-            -Dsonar.sources=.
-            -Dsonar.exclusions=**/bin/**,**/obj/**,**/node_modules/**
+          dotnet-version: '9.0.x'
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Add .NET tools to PATH
+        shell: powershell
+        run: echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Sonar Begin
+        run: >
+          dotnet-sonarscanner begin
+          /k:"vlimat-backend"
+          /d:sonar.host.url="http://localhost:9000"
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**"
+
+      - name: Restore
+        run: dotnet restore ./VLimat.Eduz.App/VLimat.Eduz.App/VLimat.Eduz.App.csproj
+
+      - name: Build
+        run: dotnet build ./VLimat.Eduz.App/VLimat.Eduz.App/VLimat.Eduz.App.csproj -c Release --no-restore
+
+      - name: Sonar End
+        run: dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
   deploy:
     name: Deploy
