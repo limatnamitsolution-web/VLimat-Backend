@@ -1,23 +1,23 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+- name: Build Docker Image
+  shell: powershell
+  run: |
+    $env:DOCKER_BUILDKIT="0"
+    docker build -t vlimat-backend:new .
 
-WORKDIR /src
+- name: Stop Existing Container
+  run: docker stop vlimat-backend
+  continue-on-error: true
 
-COPY . .
+- name: Remove Existing Container
+  run: docker rm vlimat-backend
+  continue-on-error: true
 
-WORKDIR /src/VLimat.Eduz.App/VLimat.Eduz.App
+- name: Remove Existing Image
+  run: docker rmi vlimat-backend
+  continue-on-error: true
 
-RUN dotnet restore VLimat.Eduz.App.csproj
+- name: Tag New Image
+  run: docker tag vlimat-backend:new vlimat-backend
 
-RUN dotnet publish VLimat.Eduz.App.csproj -c Release -o /app/publish --no-restore
-
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
-
-WORKDIR /app
-
-COPY --from=build /app/publish .
-
-ENV ASPNETCORE_URLS=http://+:8080
-
-EXPOSE 8080
-
-ENTRYPOINT ["dotnet", "VLimat.Eduz.App.dll"]
+- name: Run Docker Container
+  run: docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
