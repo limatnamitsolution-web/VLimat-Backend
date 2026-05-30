@@ -12,7 +12,7 @@ namespace VLimat.Eduz.App.Controllers.Master
         [HttpGet]
         public IEnumerable<string> Get()
         {
-            return new string[] { "Rahul", "Ayyappan","Vinayak" };
+            return new string[] { "Rahul", "Ayyappan","Vinayak","ABCD"};
         }
 
         // GET api/<HomeController>/5
@@ -26,6 +26,7 @@ namespace VLimat.Eduz.App.Controllers.Master
         [HttpPost]
         public void Post([FromBody] string value)
         {
+
         }
 
         // PUT api/<HomeController>/5
