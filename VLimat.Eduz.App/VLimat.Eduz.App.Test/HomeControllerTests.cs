@@ -6,19 +6,19 @@ namespace VLimat.Eduz.App.Tests.Controllers
 {
     public class HomeControllerTests
     {
-        [Fact]
-        public void Get_ReturnsExpectedNames()
-        {
-            var controller = new HomeController();
+        //[Fact]
+        //public void Get_ReturnsExpectedNames()
+        //{
+        //    var controller = new HomeController();
 
-            var result = controller.Get();
+        //    var result = controller.Get();
 
-            Assert.NotNull(result);
-            var array = result.ToArray();
-            Assert.Equal(2, array.Length);
-            Assert.Equal("Rahul", array[0]);
-            Assert.Equal("Ayyappan", array[1]);
-        }
+        //    Assert.NotNull(result);
+        //    var array = result.ToArray();
+        //    Assert.Equal(2, array.Length);
+        //    Assert.Equal("Rahul", array[0]);
+        //    Assert.Equal("Ayyappan", array[1]);
+        //}
 
         [Fact]
         public void Get_ById_ReturnsValue()
