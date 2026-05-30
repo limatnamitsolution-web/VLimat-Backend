@@ -10,16 +10,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Cleanup workspace
-        shell: powershell
-        run: |
-          Get-ChildItem -Path $env:GITHUB_WORKSPACE -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          clean: true
-          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -44,13 +36,6 @@ jobs:
         shell: powershell
         run: |
           echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Show commit and changed test files
-        shell: powershell
-        run: |
-          git rev-parse HEAD
-          git status
-          Get-ChildItem "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App.Test" -Recurse | Select-Object FullName
 
       - name: SonarQube Begin
         shell: powershell
@@ -86,8 +71,6 @@ jobs:
           dotnet test "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App.Test\VLimat.Eduz.App.Test.csproj" -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
           $testExitCode = $LASTEXITCODE
           Write-Host "dotnet test exit code = $testExitCode"
-
-          Get-ChildItem "$env:GITHUB_WORKSPACE" -Recurse -Filter TestResults.trx | Select-Object FullName
 
           dotnet sonarscanner end /d:sonar.login="$env:SONAR_TOKEN"
           $sonarExitCode = $LASTEXITCODE
