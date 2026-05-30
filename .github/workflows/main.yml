@@ -16,6 +16,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Show Workspace
+        shell: powershell
+        run: |
+          Write-Host "GITHUB_WORKSPACE = $env:GITHUB_WORKSPACE"
+          Get-ChildItem $env:GITHUB_WORKSPACE
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -45,15 +51,15 @@ jobs:
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
             /d:sonar.login="$env:SONAR_TOKEN"
 
-      - name: Build solution
+      - name: Build Solution
         shell: powershell
         run: |
-          dotnet build -c Release
+          dotnet build "$env:GITHUB_WORKSPACE\VLimat-Backend.sln" -c Release
 
-      - name: Run tests
+      - name: Run Tests
         shell: powershell
         run: |
-          dotnet test .\VLimat.Eduz.App\VLimat.Eduz.App.Test\VLimat.Eduz.App.Test.csproj -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
+          dotnet test "$env:GITHUB_WORKSPACE\tests\VLimat.Eduz.App.Test\VLimat.Eduz.App.Test.csproj" -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
 
       - name: SonarQube End
         shell: powershell
@@ -65,27 +71,32 @@ jobs:
       - name: Build Docker Image
         shell: powershell
         run: |
-          docker build -t vlimat-backend:new .
+          docker build -t vlimat-backend:new "$env:GITHUB_WORKSPACE"
 
       - name: Stop Existing Container
         shell: powershell
-        run: docker stop vlimat-backend
+        run: |
+          docker stop vlimat-backend
         continue-on-error: true
 
       - name: Remove Existing Container
         shell: powershell
-        run: docker rm vlimat-backend
+        run: |
+          docker rm vlimat-backend
         continue-on-error: true
 
       - name: Remove Existing Image
         shell: powershell
-        run: docker rmi vlimat-backend
+        run: |
+          docker rmi vlimat-backend
         continue-on-error: true
 
       - name: Tag New Image
         shell: powershell
-        run: docker tag vlimat-backend:new vlimat-backend
+        run: |
+          docker tag vlimat-backend:new vlimat-backend
 
       - name: Run Docker Container
         shell: powershell
-        run: docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
+        run: |
+          docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
