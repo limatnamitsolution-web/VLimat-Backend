@@ -50,12 +50,12 @@ jobs:
       - name: Restore Dependencies
         shell: powershell
         run: |
-          dotnet restore "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App.csproj"
+          dotnet restore "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App\VLimat.Eduz.App.csproj"
 
       - name: Build Project
         shell: powershell
         run: |
-          dotnet build "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App.csproj" -c Release --no-restore
+          dotnet build "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App\VLimat.Eduz.App.csproj" -c Release --no-restore
 
       - name: Run Tests and Finish SonarQube
         shell: powershell
