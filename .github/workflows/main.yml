@@ -112,4 +112,10 @@ jobs:
         if: success()
         shell: powershell
         run: |
-          docker tag vlimat-
+          docker tag vlimat-backend:new vlimat-backend
+
+      - name: Run Docker Container
+        if: success()
+        shell: powershell
+        run: |
+          docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
