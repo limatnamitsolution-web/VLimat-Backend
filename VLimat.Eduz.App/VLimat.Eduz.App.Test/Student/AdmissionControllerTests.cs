@@ -50,5 +50,17 @@ namespace VLimat.Eduz.App.Tests.Controllers.Student
             var objResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(500, objResult.StatusCode);
         }
+
+        // Intentionally failing test: expects Ok but controller returns BadRequest due to swallowed exception in IntentionalBug
+        [Fact]
+        public void IntentionalBug_Test_WillFail()
+        {
+            var controller = new AdmissionController();
+
+            var result = controller.IntentionalBug("trigger");
+
+            // This assertion is intentionally incorrect to produce a failing test
+            var ok = Assert.IsType<OkObjectResult>(result);
+        }
     }
 }
