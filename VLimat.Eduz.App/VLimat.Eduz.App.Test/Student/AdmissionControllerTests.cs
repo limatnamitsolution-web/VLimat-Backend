@@ -58,7 +58,6 @@ namespace VLimat.Eduz.App.Tests.Controllers.Student
             var controller = new AdmissionController();
 
             var result = controller.IntentionalBug("trigger");
-
             // This assertion is intentionally incorrect to produce a failing test
             var ok = Assert.IsType<OkObjectResult>(result);
         }
