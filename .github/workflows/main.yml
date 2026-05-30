@@ -26,14 +26,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
-
-      - name: Set JAVA_HOME
-        shell: powershell
-        run: |
-          "$env:JAVA_HOME" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "$env:JAVA_HOME\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -64,52 +58,64 @@ jobs:
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
             /d:sonar.login="$env:SONAR_TOKEN"
 
-      - name: Build Project
-        shell: powershell
-        run: |
-          dotnet build "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App\VLimat.Eduz.App.csproj" -c Release
-
-      - name: Run Tests
-        shell: powershell
-        run: |
-          dotnet test "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App.Test\VLimat.Eduz.App.Test.csproj" -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
-
-      - name: SonarQube End
+      - name: Build, Test, and Finish Sonar
         shell: powershell
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          dotnet build "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App\VLimat.Eduz.App.csproj" -c Release
+          if ($LASTEXITCODE -ne 0) {
+            dotnet sonarscanner end /d:sonar.login="$env:SONAR_TOKEN"
+            exit $LASTEXITCODE
+          }
+
+          dotnet test "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App.Test\VLimat.Eduz.App.Test.csproj" -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
+          $testExitCode = $LASTEXITCODE
+
           dotnet sonarscanner end /d:sonar.login="$env:SONAR_TOKEN"
+          $sonarExitCode = $LASTEXITCODE
+
+          if ($sonarExitCode -ne 0) {
+            exit $sonarExitCode
+          }
+
+          exit $testExitCode
 
       - name: Build Docker Image
+        if: success()
         shell: powershell
         run: |
           docker build -t vlimat-backend:new "$env:GITHUB_WORKSPACE"
 
       - name: Stop Existing Container
+        if: success()
         shell: powershell
         run: |
           docker stop vlimat-backend
         continue-on-error: true
 
       - name: Remove Existing Container
+        if: success()
         shell: powershell
         run: |
           docker rm vlimat-backend
         continue-on-error: true
 
       - name: Remove Existing Image
+        if: success()
         shell: powershell
         run: |
           docker rmi vlimat-backend
         continue-on-error: true
 
       - name: Tag New Image
+        if: success()
         shell: powershell
         run: |
           docker tag vlimat-backend:new vlimat-backend
 
       - name: Run Docker Container
+        if: success()
         shell: powershell
         run: |
           docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
