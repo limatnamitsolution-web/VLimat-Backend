@@ -73,6 +73,29 @@ namespace VLimat.Eduz.App.Controllers.Student
             }
         }
 
+        // Intentionally broken method to produce SonarQube issues (null dereference, division by zero, and empty catch)
+        [HttpGet("intentional-bug")]
+        public IActionResult IntentionalBug(string input)
+        {
+            try
+            {
+                // Possible null dereference: calling ToString() on a potentially null input
+                var length = input.ToString().Length;
+
+                // Division by zero - definite bug
+                int zero = 0;
+                var r = 1 / zero;
+
+                return Ok(r);
+            }
+            catch (Exception)
+            {
+                // Intentionally swallowing the exception - this is a code smell flagged by SonarQube
+            }
+
+            return BadRequest();
+        }
+
 
     }
 }
