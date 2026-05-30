@@ -21,8 +21,19 @@ jobs:
         run: |
           Write-Host "GITHUB_WORKSPACE = $env:GITHUB_WORKSPACE"
           Get-ChildItem $env:GITHUB_WORKSPACE
-          Get-ChildItem "$env:GITHUB_WORKSPACE\VLimat.Eduz.App"
           Get-ChildItem "$env:GITHUB_WORKSPACE\VLimat.Eduz.App" -Recurse -Filter *.csproj
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set JAVA_HOME
+        shell: powershell
+        run: |
+          "$env:JAVA_HOME" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "$env:JAVA_HOME\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
