@@ -1,87 +1,45 @@
-name: Deploy Backend
+- name: Setup .NET
+  uses: actions/setup-dotnet@v4
+  with:
+    dotnet-version: '9.0.x'
 
-on:
-  push:
-    branches:
-      - main
+- name: Install SonarScanner for .NET
+  shell: powershell
+  run: |
+    dotnet tool install --global dotnet-sonarscanner --version 5.12.0
+    if ($LASTEXITCODE -ne 0) {
+      dotnet tool update --global dotnet-sonarscanner
+    }
 
-jobs:
-  deploy:
-    name: Sonar Scan and Deploy
-    runs-on: self-hosted
+- name: Add dotnet tools to PATH
+  shell: powershell
+  run: |
+    "$env:USERPROFILE\\.dotnet\\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+- name: SonarQube Begin
+  shell: powershell
+  env:
+    SONAR_HOST_URL: "http://localhost:9000"
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  run: |
+    dotnet sonarscanner begin `
+      /k:"vlimat-backend" `
+      /d:sonar.host.url="$env:SONAR_HOST_URL" `
+      /d:sonar.login="$env:SONAR_TOKEN"
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
+- name: Build solution
+  shell: powershell
+  run: |
+    dotnet build -c Release
 
-      - name: Install SonarScanner for .NET
-        shell: powershell
-        run: |
-          dotnet tool install --global dotnet-sonarscanner --version 5.12.0
-          if ($LASTEXITCODE -ne 0) {
-            dotnet tool update --global dotnet-sonarscanner
-          }
+- name: Run tests
+  shell: powershell
+  run: |
+    dotnet test .\VLimat.Eduz.App\VLimat.Eduz.App.Test\VLimat.Eduz.App.Test.csproj -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
 
-      - name: Add dotnet tools to PATH
-        shell: powershell
-        run: |
-          echo "$HOME/.dotnet/tools" >> $env:GITHUB_PATH
-
-      - name: SonarQube Begin
-        shell: powershell
-        env:
-          SONAR_HOST_URL: http://host.docker.internal:9000
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          dotnet sonarscanner begin `
-            /k:"vlimat-backend" `
-            /d:sonar.host.url="$env:SONAR_HOST_URL" `
-            /d:sonar.login="$env:SONAR_TOKEN"
-
-      - name: Build solution
-        shell: powershell
-        run: |
-          dotnet build -c Release
-
-      - name: Run tests
-        shell: powershell
-        run: |
-          dotnet test VLimat.Eduz.App/VLimat.Eduz.App.Test/VLimat.Eduz.App.Test.csproj -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
-
-      - name: SonarQube End
-        shell: powershell
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          dotnet sonarscanner end /d:sonar.login="$env:SONAR_TOKEN"
-
-      - name: Build Docker Image
-        shell: powershell
-        run: |
-          $env:DOCKER_BUILDKIT="0"
-          docker build -t vlimat-backend:new .
-
-      - name: Stop Existing Container
-        run: docker stop vlimat-backend
-        continue-on-error: true
-
-      - name: Remove Existing Container
-        run: docker rm vlimat-backend
-        continue-on-error: true
-
-      - name: Remove Existing Image
-        run: docker rmi vlimat-backend
-        continue-on-error: true
-
-      - name: Tag New Image
-        run: docker tag vlimat-backend:new vlimat-backend
-
-      - name: Run Docker Container
-        run: docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
+- name: SonarQube End
+  shell: powershell
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  run: |
+    dotnet sonarscanner end /d:sonar.login="$env:SONAR_TOKEN"
