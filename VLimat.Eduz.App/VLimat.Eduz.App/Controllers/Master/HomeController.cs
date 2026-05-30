@@ -12,7 +12,7 @@ namespace VLimat.Eduz.App.Controllers.Master
         [HttpGet]
         public IEnumerable<string> Get()
         {
-            return new string[] { "Rahul", "Ayyappan" };
+            return new string[] { "Rahul", "Ayyappan","Vinayak" };
         }
 
         // GET api/<HomeController>/5
