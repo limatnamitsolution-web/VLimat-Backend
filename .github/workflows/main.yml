@@ -7,21 +7,11 @@ on:
 
 jobs:
   deploy:
-    name: Sonar Scan and Deploy
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Source
+      - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Show Workspace
-        shell: powershell
-        run: |
-          Write-Host "GITHUB_WORKSPACE = $env:GITHUB_WORKSPACE"
-          Get-ChildItem $env:GITHUB_WORKSPACE
-          Get-ChildItem "$env:GITHUB_WORKSPACE\VLimat.Eduz.App" -Recurse -Filter *.csproj
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -34,10 +24,10 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install SonarScanner for .NET
+      - name: Install SonarScanner
         shell: powershell
         run: |
-          dotnet tool install --global dotnet-sonarscanner --version 5.12.0
+          dotnet tool install --global dotnet-sonarscanner
           if ($LASTEXITCODE -ne 0) {
             dotnet tool update --global dotnet-sonarscanner
           }
@@ -45,30 +35,33 @@ jobs:
       - name: Add dotnet tools to PATH
         shell: powershell
         run: |
-          "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: SonarQube Begin
         shell: powershell
         env:
-          SONAR_HOST_URL: "http://localhost:9000"
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           dotnet sonarscanner begin `
             /k:"vlimat-backend" `
-            /d:sonar.host.url="$env:SONAR_HOST_URL" `
+            /d:sonar.host.url="http://localhost:9000" `
             /d:sonar.login="$env:SONAR_TOKEN"
 
-      - name: Build, Test, and Finish Sonar
+      - name: Restore Dependencies
+        shell: powershell
+        run: |
+          dotnet restore "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App\VLimat.Eduz.App.csproj"
+
+      - name: Build Project
+        shell: powershell
+        run: |
+          dotnet build "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App\VLimat.Eduz.App.csproj" -c Release --no-restore
+
+      - name: Run Tests and Finish SonarQube
         shell: powershell
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          dotnet build "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App\VLimat.Eduz.App.csproj" -c Release
-          if ($LASTEXITCODE -ne 0) {
-            dotnet sonarscanner end /d:sonar.login="$env:SONAR_TOKEN"
-            exit $LASTEXITCODE
-          }
-
           dotnet test "$env:GITHUB_WORKSPACE\VLimat.Eduz.App\VLimat.Eduz.App.Test\VLimat.Eduz.App.Test.csproj" -c Release --no-build --logger "trx;LogFileName=TestResults.trx"
           $testExitCode = $LASTEXITCODE
 
@@ -82,40 +75,34 @@ jobs:
           exit $testExitCode
 
       - name: Build Docker Image
-        if: success()
         shell: powershell
         run: |
-          docker build -t vlimat-backend:new "$env:GITHUB_WORKSPACE"
+          docker build -t vlimat-backend:new .
 
       - name: Stop Existing Container
-        if: success()
         shell: powershell
+        continue-on-error: true
         run: |
           docker stop vlimat-backend
-        continue-on-error: true
 
       - name: Remove Existing Container
-        if: success()
         shell: powershell
+        continue-on-error: true
         run: |
           docker rm vlimat-backend
-        continue-on-error: true
 
       - name: Remove Existing Image
-        if: success()
         shell: powershell
+        continue-on-error: true
         run: |
           docker rmi vlimat-backend
-        continue-on-error: true
 
       - name: Tag New Image
-        if: success()
         shell: powershell
         run: |
           docker tag vlimat-backend:new vlimat-backend
 
       - name: Run Docker Container
-        if: success()
         shell: powershell
         run: |
           docker run -d --restart unless-stopped -p 5000:8080 --name vlimat-backend vlimat-backend
