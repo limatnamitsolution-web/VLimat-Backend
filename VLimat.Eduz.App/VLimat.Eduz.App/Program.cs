@@ -3,8 +3,17 @@ using VLimat.Eduz.Application.DependencyInjection;
 using VLimat.Eduz.Infrastructure.DependencyInjection; // if you created DI extension in Infrastructure
 using VLimat.Eduz.Infrastructure.Persistence;
 using VVLimat.Eduz.App.Middleware;
-
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 var builder = WebApplication.CreateBuilder(args);
+
+var serviceName = "vlimat-backend";
+var otlpEndpoint = new Uri("http://localhost:4318");
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 // read connection string
 //var conn = builder.Configuration.GetConnectionString("DefaultConnection");
 //const string dapperConnectionName = "DapperConnection";
@@ -40,12 +49,8 @@ builder.Services.AddControllers().Services.AddControllers();
     //{
     //    options.JsonSerializerOptions.PropertyNamingPolicy = null; // Use PascalCase
     //    options.JsonSerializerOptions.DictionaryKeyPolicy = null; // Use PascalCase for dictionaries
-    //}); ;
-
-
-//Schould Enable when need to  returns dataset or datatable from sql directly
-//.AddNewtonsoftJson(options =>
-//    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+    //}).AddNewtonsoftJson(options =>
+    //    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
 //);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -63,6 +68,27 @@ builder.Services.AddAuthentication(); // optional, if using any auth scheme
 
 // ✅ Add authorization
 builder.Services.AddAuthorization();
+
+
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(
+        ResourceBuilder.CreateDefault().AddService(serviceName));
+
+    options.IncludeFormattedMessage = true;
+    options.IncludeScopes = true;
+    options.ParseStateValues = true;
+
+    options.AddOtlpExporter(otlp =>
+    {
+        otlp.Endpoint = otlpEndpoint;
+        otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+    });
+});
+
+
+
 
 var app = builder.Build();
 
@@ -82,5 +108,10 @@ app.UseAuthentication(); // optional, but must come before authorization
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapGet("/otel-test", (ILoggerFactory loggerFactory) =>
+{
+    var logger = loggerFactory.CreateLogger("OtelTest");
+    logger.LogInformation("OpenTelemetry log sent at {Time}", DateTime.UtcNow);
+    return Results.Ok("log sent");
+});
 app.Run();
