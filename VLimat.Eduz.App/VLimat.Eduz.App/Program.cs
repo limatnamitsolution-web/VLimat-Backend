@@ -71,6 +71,21 @@ builder.Services.AddAuthorization();
 
 
 
+//builder.Logging.AddOpenTelemetry(options =>
+//{
+//    options.SetResourceBuilder(
+//        ResourceBuilder.CreateDefault().AddService(serviceName));
+
+//    options.IncludeFormattedMessage = true;
+//    options.IncludeScopes = true;
+//    options.ParseStateValues = true;
+
+//    options.AddOtlpExporter(otlp =>
+//    {
+//        otlp.Endpoint = otlpEndpoint;
+//        otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+//    });
+//});
 builder.Logging.AddOpenTelemetry(options =>
 {
     options.SetResourceBuilder(
@@ -86,7 +101,6 @@ builder.Logging.AddOpenTelemetry(options =>
         otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
     });
 });
-
 
 
 
@@ -108,6 +122,14 @@ app.UseAuthentication(); // optional, but must come before authorization
 app.UseAuthorization();
 
 app.MapControllers();
+//app.MapGet("/otel-test", (ILoggerFactory loggerFactory) =>
+//{
+//    var logger = loggerFactory.CreateLogger("OtelTest");
+//    logger.LogInformation("Test log from VLimat backend at {Time}", DateTime.UtcNow);
+//    logger.LogWarning("This is a warning test log");
+//    logger.LogError("This is an error test log");
+//    return Results.Ok("3 logs sent");
+//});
 app.MapGet("/otel-test", (ILoggerFactory loggerFactory) =>
 {
     var logger = loggerFactory.CreateLogger("OtelTest");
