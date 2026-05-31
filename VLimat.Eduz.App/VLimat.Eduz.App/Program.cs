@@ -111,7 +111,9 @@ app.MapControllers();
 app.MapGet("/otel-test", (ILoggerFactory loggerFactory) =>
 {
     var logger = loggerFactory.CreateLogger("OtelTest");
-    logger.LogInformation("OpenTelemetry log sent at {Time}", DateTime.UtcNow);
-    return Results.Ok("log sent");
+    logger.LogInformation("Test log from VLimat backend at {Time}", DateTime.UtcNow);
+    logger.LogWarning("This is a warning test log");
+    logger.LogError("This is an error test log");
+    return Results.Ok("3 logs sent");
 });
 app.Run();
