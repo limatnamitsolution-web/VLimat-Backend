@@ -143,10 +143,15 @@ app.MapControllers();
 //});
 app.MapGet("/otel-test", (ILoggerFactory loggerFactory) =>
 {
-    var logger = loggerFactory.CreateLogger("OtelTest");
-    logger.LogInformation("Test log from VLimat backend at {Time}", DateTime.UtcNow);
-    logger.LogWarning("This is a warning test log");
-    logger.LogError("This is an error test log");
+    var _logger = loggerFactory.CreateLogger("OtelTest");
+
+    var endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+    _logger.LogInformation("OTLP endpoint: {Endpoint}", endpoint ?? "NOT SET");
+
+    _logger.LogInformation("Test log from VLimat backend");
+    _logger.LogWarning("This is a warning test log");
+    _logger.LogError("This is an error test log");
+
     return Results.Ok("3 logs sent");
 });
 app.Run();
