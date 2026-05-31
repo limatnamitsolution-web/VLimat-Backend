@@ -1,12 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using VLimat.Eduz.Application.DependencyInjection;
-using VLimat.Eduz.Infrastructure.DependencyInjection; // if you created DI extension in Infrastructure
-using VLimat.Eduz.Infrastructure.Persistence;
-using VVLimat.Eduz.App.Middleware;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using VLimat.Eduz.Application.DependencyInjection;
+using VLimat.Eduz.Infrastructure.DependencyInjection; // if you created DI extension in Infrastructure
+using VLimat.Eduz.Infrastructure.Persistence;
+using VVLimat.Eduz.App.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
 var serviceName = "vlimat-backend";
@@ -86,22 +87,32 @@ builder.Services.AddAuthorization();
 //        otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
 //    });
 //});
+//builder.Logging.AddOpenTelemetry(options =>
+//{
+//    options.SetResourceBuilder(
+//        ResourceBuilder.CreateDefault().AddService(serviceName));
+
+//    options.IncludeFormattedMessage = true;
+//    options.IncludeScopes = true;
+//    options.ParseStateValues = true;
+
+//    options.AddOtlpExporter(otlp =>
+//    {
+//        otlp.Endpoint = otlpEndpoint;
+//        otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+//    });
+//});
 builder.Logging.AddOpenTelemetry(options =>
 {
-    options.SetResourceBuilder(
-        ResourceBuilder.CreateDefault().AddService(serviceName));
-
-    options.IncludeFormattedMessage = true;
     options.IncludeScopes = true;
+    options.IncludeFormattedMessage = true;
     options.ParseStateValues = true;
-
-    options.AddOtlpExporter(otlp =>
+    options.AddOtlpExporter(otlpOptions =>
     {
-        otlp.Endpoint = otlpEndpoint;
-        otlp.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+        otlpOptions.Endpoint = new Uri("http://grafana-lgtm:4318");
+        otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
     });
 });
-
 
 
 var app = builder.Build();
