@@ -102,16 +102,19 @@ builder.Services.AddAuthorization();
 //});
 builder.Logging.AddOpenTelemetry(options =>
 {
+    options.SetResourceBuilder(
+        ResourceBuilder.CreateDefault().AddService("vlimat-backend"));
+
     options.IncludeScopes = true;
     options.IncludeFormattedMessage = true;
     options.ParseStateValues = true;
+
     options.AddOtlpExporter(otlpOptions =>
     {
-        otlpOptions.Endpoint = new Uri("http://grafana-lgtm:4318/v1/logs");
-        otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+        otlpOptions.Endpoint = new Uri("http://grafana-lgtm:4317");
+        otlpOptions.Protocol = OtlpExportProtocol.Grpc;
     });
 });
-
 
 var app = builder.Build();
 
