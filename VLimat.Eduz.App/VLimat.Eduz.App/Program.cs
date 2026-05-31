@@ -116,6 +116,7 @@ builder.Logging.AddOpenTelemetry(options =>
     });
 });
 
+
 var app = builder.Build();
 
 // ✅ Configure middleware pipeline
@@ -150,7 +151,9 @@ app.MapGet("/otel-test", (ILoggerFactory loggerFactory) =>
     logger.LogInformation("Test log from VLimat backend");
     logger.LogWarning("This is a warning test log");
     logger.LogError("This is an error test log");
-
+    var endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+    logger.LogInformation("OTLP endpoint: {Endpoint}", endpoint ?? "NOT SET");
+    logger.LogInformation("OTLP exporter configured for http://grafana-lgtm:4317");
     return Results.Ok("3 logs sent");
 });
 app.Run();
