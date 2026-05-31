@@ -10,8 +10,6 @@ using VLimat.Eduz.Infrastructure.Persistence;
 using VVLimat.Eduz.App.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
-var serviceName = "vlimat-backend";
-var otlpEndpoint = new Uri("http://localhost:4318");
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
@@ -109,7 +107,7 @@ builder.Logging.AddOpenTelemetry(options =>
     options.ParseStateValues = true;
     options.AddOtlpExporter(otlpOptions =>
     {
-        otlpOptions.Endpoint = new Uri("http://grafana-lgtm:4318");
+        otlpOptions.Endpoint = new Uri("http://grafana-lgtm:4318/v1/logs");
         otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
     });
 });
